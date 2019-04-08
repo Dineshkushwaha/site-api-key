@@ -1,0 +1,6 @@
+site_api_key.get:
+  path: 'page_json/{api_key}/{nid}'
+  defaults: { _controller: '\Drupal\site_api_key\Controller\SiteController::getContent' }
+  methods:  [GET]
+  requirements:
+    _access: 'TRUE'

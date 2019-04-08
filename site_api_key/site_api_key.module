@@ -1,0 +1,48 @@
+<?php
+
+/**
+ * @file
+ * Alter the Site information form and adds a site API key.
+ */
+
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Messenger\MessengerInterface;
+
+/**
+ * Implements hook_form_alter().
+ */
+function site_api_key_form_alter(&$form, FormStateInterface $form_state, $form_id) {
+  // Add Site API Key only to system_site_information_settings form.
+  if ($form_id === 'system_site_information_settings') {
+    $default_value = t('No API Key yet');
+    $config = \Drupal::config('siteapikey.settings');
+    $api_value = $config->get('siteapikey');
+    if (isset($api_value) && !empty($api_value) && ($api_value !== $default_value)) {
+      $form['actions']['submit']['#value'] = t('Update Configuration');
+    }
+
+    $form['site_information']['api_key'] = [
+      '#type' => 'textfield',
+      '#title' => t('Site API Key'),
+      '#description' => t('Enter your Site API Key'),
+      '#maxlength' => 128,
+      '#size' => 60,
+      '#weight' => '0',
+      '#default_value' => !empty($api_value) ? $api_value : $default_value,
+    ];
+    $form['#submit'][] = 'site_api_key_form_submit';
+  }
+
+}
+
+/**
+ * Implements form_submit().
+ */
+function site_api_key_form_submit(array $form, FormStateInterface $form_state) {
+  $api_key = $form_state->getValue('api_key');
+  $config = \Drupal::service('config.factory')->getEditable('siteapikey.settings');
+  $config->set('siteapikey', $api_key)->save();
+  $api_value = $config->get('siteapikey');
+  $messenger = \Drupal::messenger();
+  $messenger->addStatus("Site API Key has been saved with value " . $api_value, MessengerInterface::TYPE_STATUS);
+}
